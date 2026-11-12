@@ -1,0 +1,6 @@
+metrica,datos_crudos,datos_limpios
+filas,13611,13543
+columnas,17,17
+nulos_totales,0,0
+duplicados,68,0
+outliers_IQR_totales,7139,7152
