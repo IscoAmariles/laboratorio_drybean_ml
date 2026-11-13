@@ -18,3 +18,7 @@ Thumbs.db
 
 # Artefactos pesados (el equipo decide si se versiona el modelo final)
 outputs/models/*.joblib
+
+.venv312/
+
+.venv312/
