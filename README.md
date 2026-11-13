@@ -10,7 +10,7 @@ Proyecto de equipo de la UAO. Enunciado y plan de equipo en [`docs/`](docs/).
 | Sprint | Alcance | Estado |
 |---|---|---|
 | 1 · Comprensión y preparación | Ingesta, calidad de datos, EDA, split train/test | Hecho |
-| 2 · Modelado y evaluación | Logistic Regression, Random Forest, métricas, matriz de confusión | Pendiente |
+| 2 · Modelado y evaluación | Logistic Regression, Random Forest, métricas, matriz de confusión | Hecho (en revisión) |
 | 3 · Despliegue y documentación | Modelo `.joblib`, README final, presentación | Pendiente |
 
 Registro de planes y decisiones: [`docs/bitacora/`](docs/bitacora/).
@@ -78,6 +78,25 @@ Decisiones de preparación (trazabilidad TDSP):
 
 - Clases desbalanceadas: `DERMASON` 3.546 vs. `BOMBAY` 522 (razón 6,8). Métrica principal: **F1 macro**.
 - Colinealidad muy alta entre variables de tamaño (`Area`–`ConvexArea` ≈ 1,00, `Perimeter`–`EquivDiameter` ≈ 0,99) y entre `Compactness`–`ShapeFactor3` ≈ 1,00.
+
+## Modelado y resultados (Sprint 2)
+
+Notebook: [`notebooks/02_modelado_evaluacion.ipynb`](notebooks/02_modelado_evaluacion.ipynb). Código en `src/models.py` y `src/evaluate.py`. Las decisiones se toman con validación cruzada sobre train; el test solo informa el desempeño.
+
+| Modelo | Accuracy (test) | F1 macro (test) | F1 macro CV |
+|---|---|---|---|
+| Logistic Regression (baseline) | 0,9195 | 0,9306 | 0,9365 ± 0,0037 |
+| Random Forest | 0,9195 | 0,9310 | 0,9343 ± 0,0047 |
+| Random Forest ajustado | 0,9192 | 0,9308 | 0,9354 ± 0,0043 |
+
+Los tres son equivalentes (la diferencia es menor que la desviación entre pliegues), así que se elige la **Regresión Logística**, el modelo más simple. Los errores se concentran en `DERMASON` ↔ `SIRA` (43 % del total). Detalle en [`docs/bitacora/2026-11-12_04_reporte-sprint-2.md`](docs/bitacora/2026-11-12_04_reporte-sprint-2.md).
+
+Para ejecutar el notebook con las versiones fijadas del `.venv` (un kernel de otro Python, p. ej. Anaconda, cambia los resultados):
+
+```powershell
+$env:JUPYTER_PATH = "$PWD\.venv\share\jupyter"
+jupyter nbconvert --to notebook --execute --inplace notebooks/02_modelado_evaluacion.ipynb
+```
 
 ## Uso desde código
 
