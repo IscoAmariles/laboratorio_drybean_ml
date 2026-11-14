@@ -1,5 +1,5 @@
 > **Bitácora 03 · 2026-11-12** · Plan de trabajo del rol ML Engineer (JHE).
-> Estado: **Sprint 2 ejecutado** (rama `feature/modelado`), ver [reporte del Sprint 2](2026-11-12_04_reporte-sprint-2.md). El Sprint 3 queda pendiente.
+> Estado: **Sprints 2 y 3 ejecutados**. Ver [reporte del Sprint 2](2026-11-12_04_reporte-sprint-2.md) y [reporte del Sprint 3](2026-11-14_08_reporte-ml-engineer-sprint-3.md). El Sprint 3 incorporó las recomendaciones de la [bitácora 06](2026-11-14_06_diagnostico-y-recomendaciones-por-rol.md) (comparación formal con SVM y Gradient Boosting, que cambió el modelo final).
 
 # Plan de trabajo: ML Engineer, proyecto Dry Bean ML
 
@@ -60,7 +60,7 @@
 
 ---
 
-## SPRINT 3: Despliegue y documentación (pendiente)
+## SPRINT 3: Despliegue y documentación (ejecutado)
 
 ### 7. Guardar el modelo (pasos 16 y 17)
 7.1. `src/train.py` (`python -m src.train`): entrena el modelo final, evalúa y guarda el **Pipeline completo** en `outputs/models/modelo_final_drybean.joblib`.

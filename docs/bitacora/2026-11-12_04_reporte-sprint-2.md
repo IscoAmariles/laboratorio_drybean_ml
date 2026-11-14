@@ -27,7 +27,7 @@ TDD: primero `tests/test_models.py` y `tests/test_evaluate.py` (fase roja: `Modu
 1. **Los tres modelos son equivalentes.** La diferencia en test es de 0,0004 de F1 macro y en CV de 0,002, menor que la desviación entre pliegues (≈ 0,004).
 2. **Modelo elegido: Regresión Logística** (criterio del laboratorio: ante desempeño parecido, el más simple). Ni el ajuste de hiperparámetros hace que Random Forest supere al baseline.
 3. **Errores concentrados en DERMASON ↔ SIRA:** 94 de los 218 errores de la regresión logística (43 %). Forma casi idéntica (relación de aspecto mediana 1,48 vs 1,56; solidez 0,989 en ambas) y diferencia sobre todo de tamaño, con solapamiento. `SIRA` tiene el peor F1 (0,87).
-4. **BARBUNYA ↔ CALI** es el segundo par (≈ 17–19 errores por sentido); `BOMBAY` no tiene errores (F1 = 1,00).
+4. **BARBUNYA → CALI** es el segundo par, y es asimétrico: 18 errores con la regresión logística y 17 con Random Forest, frente a 8 y 11 en el sentido contrario (CALI → BARBUNYA). `BOMBAY` no tiene errores (F1 = 1,00). *(Corregido en el Sprint 3: el texto original decía "≈ 17–19 por sentido".)*
 5. **Importancia de variables:** por impureza se reparte entre variables colineales; por permutación destaca `Roundness` (0,084), muy por encima del resto. Las variables de tamaño gemelas no pierden al permutarse porque se reemplazan entre sí.
 
 ## Decisiones técnicas
