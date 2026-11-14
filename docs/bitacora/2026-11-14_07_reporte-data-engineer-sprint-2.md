@@ -1,6 +1,6 @@
 # Reporte de ejecución · Data Engineer / Analyst · Sprint 2
 
-**Fecha:** 2026-11-14 · **Rama:** `feature/data-sprint2` · **Plan ejecutado:** [bitácora 06, sección 6](2026-11-14_06_diagnostico-y-recomendaciones-por-rol.md) · **PR:** PR_LINK
+**Fecha:** 2026-11-14 · **Rama:** `feature/data-sprint2` · **Plan ejecutado:** [bitácora 06, sección 6](2026-11-14_06_diagnostico-y-recomendaciones-por-rol.md) · **PR:** [#4](https://github.com/IscoAmariles/laboratorio_drybean_ml/pull/4)
 
 ## Método
 Se fijaron metas con criterio de aceptación verificable (G1 a G6) y el código nuevo se hizo con TDD: primero las pruebas (fase roja), después el mínimo código que las pasa (fase verde). Cada cifra que aparece en un texto está protegida por un `assert` en el notebook que la calcula.
