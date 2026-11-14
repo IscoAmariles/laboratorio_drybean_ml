@@ -11,7 +11,7 @@ Proyecto de equipo de la UAO. Enunciado y plan de equipo en [`docs/`](docs/).
 |---|---|---|
 | 1 · Comprensión y preparación | Ingesta, calidad de datos, EDA, split train/test | Hecho |
 | 2 · Modelado y evaluación | Logistic Regression, Random Forest, métricas, matriz de confusión | Hecho (en revisión) |
-| 3 · Despliegue y documentación | Modelo `.joblib`, README final, presentación | Pendiente |
+| 3 · Despliegue y documentación | Modelo `.joblib`, entrenamiento y predicción reproducibles, reporte final, presentación | ML Engineer: hecho (en revisión). Reporte final (secciones 1 y 7) y presentación: en curso |
 
 Registro de planes y decisiones: [`docs/bitacora/`](docs/bitacora/).
 
@@ -26,11 +26,11 @@ laboratorio_drybean_ml/
 │   ├── bitacora/            # planes y reportes por sprint
 │   ├── reporte/             # secciones del reporte final (una por rol)
 │   └── presentacion/        # guion de láminas
-├── notebooks/               # 01 EDA y preparación · 02 modelado · 03 análisis de errores
+├── notebooks/               # 01 EDA · 02 modelado · 03 análisis de errores · 04 modelo final y despliegue
 ├── outputs/
-│   ├── models/              # modelos entrenados (.joblib)
+│   ├── models/              # modelo final (.joblib) y su metadata (.json)
 │   └── reports/             # gráficas, métricas y resúmenes
-├── src/                     # data_loader, preprocessing, quality, make_dataset, models, evaluate, error_analysis
+├── src/                     # data_loader, preprocessing, quality, make_dataset, models, evaluate, error_analysis, train, predict
 ├── tests/                   # pruebas con pytest (unitarias y una de red)
 ├── requirements.txt
 └── README.md
@@ -52,7 +52,10 @@ python -m pytest
 # 3. Generar datos procesados (descarga de UCI la primera vez)
 python -m src.make_dataset
 
-# 4. Notebooks (01 EDA, 02 modelado, 03 análisis de errores)
+# 4. Entrenar y guardar el modelo final (outputs/models/)
+python -m src.train
+
+# 5. Notebooks (01 EDA, 02 modelado, 03 errores, 04 modelo final)
 jupyter notebook notebooks/
 ```
 
@@ -95,7 +98,7 @@ Notebook: [`notebooks/02_modelado_evaluacion.ipynb`](notebooks/02_modelado_evalu
 | Random Forest | 0,9195 | 0,9310 | 0,9343 ± 0,0047 |
 | Random Forest ajustado | 0,9192 | 0,9308 | 0,9354 ± 0,0043 |
 
-Los tres son equivalentes (la diferencia es menor que la desviación entre pliegues), así que se elige la **Regresión Logística**, el modelo más simple. Los errores se concentran en `DERMASON` ↔ `SIRA` (43 % del total). Detalle en [`docs/bitacora/2026-11-12_04_reporte-sprint-2.md`](docs/bitacora/2026-11-12_04_reporte-sprint-2.md).
+Estos tres son equivalentes entre sí (la diferencia es menor que la desviación entre pliegues). Los errores se concentran en `DERMASON` ↔ `SIRA` (43 % del total). Detalle en [`docs/bitacora/2026-11-12_04_reporte-sprint-2.md`](docs/bitacora/2026-11-12_04_reporte-sprint-2.md). *La elección del modelo final se revisó en el Sprint 3 (sección siguiente).*
 
 Para ejecutar el notebook con las versiones fijadas del `.venv` (un kernel de otro Python, p. ej. Anaconda, cambia los resultados):
 
@@ -104,22 +107,42 @@ $env:JUPYTER_PATH = "$PWD\.venv\share\jupyter"
 jupyter nbconvert --to notebook --execute --inplace notebooks/02_modelado_evaluacion.ipynb
 ```
 
+## Modelo final y despliegue (Sprint 3)
+
+Notebook: [`notebooks/04_modelo_final_y_despliegue.ipynb`](notebooks/04_modelo_final_y_despliegue.ipynb). Código en `src/train.py` y `src/predict.py`.
+
+El diagnóstico del repositorio pidió probar SVM y Gradient Boosting con el mismo protocolo antes de cerrar la elección. Validación cruzada **anidada** de 5 pliegues sobre train, con los mismos pliegues para todos:
+
+| Modelo | F1 macro CV | Diferencia vs. logreg | Pliegues ganados |
+|---|---|---|---|
+| Logistic Regression | 0,9365 ± 0,0037 | — | — |
+| Random Forest | 0,9343 ± 0,0047 | −0,0022 | 1 de 5 |
+| **SVM RBF** | **0,9432 ± 0,0049** | **+0,0068** | **5 de 5** |
+| Gradient Boosting | 0,9405 ± 0,0033 | +0,0041 | 5 de 5 |
+
+Con la regla del equipo la regresión logística ya no es equivalente al mejor; Gradient Boosting sí lo es y se elige el más simple: **SVM RBF** (`C=100`, `gamma=0,01`). En test: accuracy **0,9232**, F1 macro **0,9342**, peor recall **0,871** (`SIRA`), con lo que cumple el criterio propuesto (F1 macro ≥ 0,92 y recall mínimo ≥ 0,85). La mejora es pequeña pero consistente, y la SVM es menos interpretable que la regresión logística: es una decisión que debe validar el Product Owner (si prefiere interpretabilidad, `python -m src.train --model logreg` lo reemplaza y también cumple el criterio).
+
+```powershell
+# Reentrenar y guardar el modelo final (Pipeline completo + metadata)
+python -m src.train
+
+# Predecir granos nuevos desde un CSV con las 16 variables
+python -m src.predict --input nuevos_granos.csv --output predicciones.csv
+```
+
+El modelo (`outputs/models/modelo_final_drybean.joblib`, 413 KB) se versiona junto con `modelo_final_metadata.json` (hiperparámetros, métricas, versiones de las librerías, variables y clases). `joblib` es sensible a la versión de scikit-learn: `load_model` avisa si no coincide con la del entrenamiento.
+
 ## Uso desde código
 
 ```python
-import pandas as pd
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
-from src.preprocessing import build_preprocessor
+from src.predict import load_model, predict_bean_class, predict_beans
 
-train = pd.read_csv("data/processed/train.csv")
-test = pd.read_csv("data/processed/test.csv")
-X_train, y_train = train.drop(columns="Class"), train["Class"]
-X_test, y_test = test.drop(columns="Class"), test["Class"]
-
-modelo = Pipeline([("scaler", build_preprocessor()),
-                   ("clf", LogisticRegression(max_iter=1000, random_state=42))])
+modelo = load_model()                       # outputs/models/modelo_final_drybean.joblib
+predict_bean_class(modelo, {"Area": 40512, "Perimeter": 737.6, ...})   # un grano (dict, Series o DataFrame)
+predict_beans(modelo, datos_nuevos)         # varias filas -> array de variedades
 ```
+
+Valida que estén las 16 variables (en cualquier orden), rechaza valores nulos e ignora columnas extra.
 
 ## Metodología y equipo
 

@@ -16,7 +16,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Artefactos pesados (el equipo decide si se versiona el modelo final)
-outputs/models/*.joblib
+# El modelo final se versiona (≈ 0,4 MB). Si pasara de unos pocos MB, volver a ignorarlo
+# y regenerarlo con `python -m src.train`.
 
 .venv312/

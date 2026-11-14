@@ -2,12 +2,15 @@
 import pandas as pd
 import pytest
 from sklearn.datasets import make_classification
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
-from src.models import build_baseline, build_random_forest, load_train_test
+from src.models import (MODEL_BUILDERS, build_baseline, build_hist_gradient_boosting,
+                        build_model, build_random_forest, build_svm, load_train_test)
 
 CLASES = ["A", "B", "C"]
 
@@ -74,3 +77,60 @@ def test_los_modelos_entrenan_y_predicen_etiquetas_validas(builder, datos):
     pred = modelo.predict(X)
     assert len(pred) == len(y)
     assert set(pred) <= set(CLASES)
+
+
+# --- Sprint 3: modelos candidatos adicionales (recomendación del diagnóstico) ---
+
+def test_svm_es_pipeline_con_scaler_y_kernel_rbf():
+    modelo = build_svm()
+    assert [n for n, _ in modelo.steps] == ["scaler", "classifier"]
+    assert isinstance(modelo.named_steps["scaler"], StandardScaler)
+    clf = modelo.named_steps["classifier"]
+    assert isinstance(clf, SVC)
+    assert clf.kernel == "rbf"
+    assert clf.random_state == 42
+
+
+def test_hist_gradient_boosting_es_reproducible_y_sin_parada_temprana():
+    clf = build_hist_gradient_boosting().named_steps["classifier"]
+    assert isinstance(clf, HistGradientBoostingClassifier)
+    assert clf.random_state == 42
+    # con 'auto' se activaría solo con más de 10.000 filas y cambiaría el protocolo
+    assert clf.early_stopping is False
+
+
+def test_los_parametros_sobrescriben_los_valores_por_defecto():
+    assert build_svm(C=3.0).named_steps["classifier"].C == 3.0
+    assert build_hist_gradient_boosting(max_iter=50).named_steps["classifier"].max_iter == 50
+
+
+@pytest.mark.parametrize("nombre", ["svm", "hist_gb"])
+def test_los_modelos_nuevos_entrenan_y_predicen_etiquetas_validas(nombre, datos):
+    X, y = datos
+    pred = MODEL_BUILDERS[nombre]().fit(X, y).predict(X)
+    assert set(pred) <= set(CLASES)
+
+
+def test_registro_de_modelos_tiene_los_cuatro_candidatos():
+    assert set(MODEL_BUILDERS) == {"logreg", "random_forest", "svm", "hist_gb"}
+
+
+def test_build_model_sin_ajuste_devuelve_un_pipeline():
+    assert isinstance(build_model("svm"), Pipeline)
+
+
+def test_build_model_con_ajuste_devuelve_gridsearch_f1_macro():
+    for nombre in ("svm", "hist_gb", "random_forest"):
+        gs = build_model(nombre, tune=True)
+        assert isinstance(gs, GridSearchCV)
+        assert gs.scoring == "f1_macro"
+        assert all(k.startswith("classifier__") for k in gs.param_grid)
+
+
+def test_build_model_logreg_no_tiene_grilla():
+    assert isinstance(build_model("logreg", tune=True), Pipeline)
+
+
+def test_build_model_rechaza_nombres_desconocidos():
+    with pytest.raises(ValueError, match="desconocido"):
+        build_model("xgboost")
