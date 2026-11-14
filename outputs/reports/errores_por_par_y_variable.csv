@@ -1,0 +1,7 @@
+real → predicho,errores,tamaño (Area),alargamiento (AspectRatio),redondez (Roundness),variable que lo explica
+DERMASON → SIRA,53,0.92,0.6,0.55,tamaño
+SIRA → DERMASON,41,0.78,0.49,0.41,tamaño
+BARBUNYA → CALI,18,0.44,0.44,0.94,redondez
+DERMASON → SEKER,13,0.92,0.69,0.62,tamaño
+HOROZ → CALI,11,0.36,0.91,0.45,alargamiento
+SEKER → BARBUNYA,9,0.33,0.33,0.67,ninguna aislada

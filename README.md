@@ -23,20 +23,22 @@ laboratorio_drybean_ml/
 │   ├── raw/                 # dato original, sin modificar
 │   └── processed/           # dry_bean_clean.csv, train.csv, test.csv
 ├── docs/                    # enunciado, plan de equipo, diccionario de datos
-│   └── bitacora/            # planes y reportes por sprint
-├── notebooks/               # 01_comprension_preparacion_datos.ipynb
+│   ├── bitacora/            # planes y reportes por sprint
+│   ├── reporte/             # secciones del reporte final (una por rol)
+│   └── presentacion/        # guion de láminas
+├── notebooks/               # 01 EDA y preparación · 02 modelado · 03 análisis de errores
 ├── outputs/
 │   ├── models/              # modelos entrenados (.joblib)
-│   └── reports/             # gráficas y resúmenes de calidad
-├── src/                     # código reutilizable (data_loader, preprocessing, quality, make_dataset)
-├── tests/                   # pruebas con pytest
+│   └── reports/             # gráficas, métricas y resúmenes
+├── src/                     # data_loader, preprocessing, quality, make_dataset, models, evaluate, error_analysis
+├── tests/                   # pruebas con pytest (unitarias y una de red)
 ├── requirements.txt
 └── README.md
 ```
 
 ## Cómo reproducir
 
-Requiere Python 3.10 o superior (desarrollado con 3.13).
+**Requiere Python 3.12 o superior** (verificado con 3.12 y 3.13). Con 3.10 u 3.11 no se pueden instalar las dependencias fijadas: `numpy 2.5.4` exige Python 3.12 o superior.
 
 ```powershell
 # 1. Entorno virtual (Windows PowerShell)
@@ -50,11 +52,15 @@ python -m pytest
 # 3. Generar datos procesados (descarga de UCI la primera vez)
 python -m src.make_dataset
 
-# 4. Notebook de EDA
-jupyter notebook notebooks/01_comprension_preparacion_datos.ipynb
+# 4. Notebooks (01 EDA, 02 modelado, 03 análisis de errores)
+jupyter notebook notebooks/
 ```
 
 En Linux o macOS la activación es `source .venv/bin/activate`.
+
+**Pruebas sin internet.** La prueba que descarga el dataset real lleva el marcador `network` y se omite sola, con un aviso, si UCI no es accesible; el resto corre siempre. Para forzar la omisión: `DRYBEAN_SKIP_NETWORK=1 python -m pytest`. Para ejecutar solo esa prueba: `python -m pytest -m network`.
+
+**Notebooks.** Ejecútalos con el kernel del `.venv` (un kernel de otro Python, p. ej. Anaconda, cambia los resultados). Cada notebook imprime las versiones de Python y scikit-learn con las que se obtuvieron.
 
 ## Datos
 
@@ -69,7 +75,7 @@ Decisiones de preparación (trazabilidad TDSP):
 
 - **Duplicados:** se eliminan 68 filas idénticas (todas de la clase `HOROZ`) para evitar fuga de datos entre train y test.
 - **Nulos:** no hay. La limpieza falla con error si aparecen, en vez de imputar en silencio.
-- **Outliers:** no se eliminan. Son mediciones físicas reales de los granos.
+- **Outliers:** no se eliminan. Son mediciones físicas reales de los granos. El conteo IQR pasa de 7.139 a 7.152 al quitar duplicados (−35 que estaban en las filas repetidas, +48 por recalcular cuartiles); explicación en el notebook 01, sección 5.1.
 - **Split:** 80/20, `random_state=42`, estratificado por `Class`.
 - **Escalado:** `StandardScaler` (`build_preprocessor()` en `src/preprocessing.py`), pensado para ir dentro del `Pipeline` del modelo y ajustarse solo con train.
 - **Variables:** significado y fórmulas en [`docs/diccionario_datos.md`](docs/diccionario_datos.md).
